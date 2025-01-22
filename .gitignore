@@ -1,21 +1,45 @@
-*.js
-!jest.config.js
-*.d.ts
-node_modules
+# Python virtual environment
+venv/
+.venv/
+env/
+ENV/
 
-# CDK asset staging directory
-.cdk.staging
-cdk.out
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Environment configuration
-.env
-.env.*
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
 
-# IDE and editor files
+# Node
+node_modules/
+npm-debug.log*
+
+# CDK
+cdk.out/
+.cdk.staging/
+
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Environment variables
+.env
+.env.local
+
+# AWS
+.aws-sam/
+samconfig.toml
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
 
 # OS generated files
 .DS_Store

@@ -7,8 +7,13 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest",
-    "cdk": "cdk"
+    "test": "npm run test:infrastructure && npm run test:lambda",
+    "test:infrastructure": "jest",
+    "test:lambda": "venv\\Scripts\\python.exe -m pytest test/lambda/test_sensor_processor.py -v",
+    "cdk": "cdk",
+    "deploy:dev": "cdk deploy WaterSensorTracker-Dev --require-approval never",
+    "deploy:prod": "cdk deploy WaterSensorTracker-Prod --require-approval never",
+    "deploy:all": "cdk deploy --all --require-approval never"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",

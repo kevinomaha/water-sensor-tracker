@@ -1,0 +1,4 @@
+pytest==7.4.0
+boto3==1.34.14
+moto==4.2.13
+python-dotenv==1.0.0
