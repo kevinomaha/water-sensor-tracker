@@ -4,6 +4,7 @@ export interface EnvironmentConfig {
   apiDescription: string;
   retentionDays: number;
   isProd: boolean;
+  stackName: string;
 }
 
 export const environments: { [key: string]: EnvironmentConfig } = {
@@ -12,13 +13,15 @@ export const environments: { [key: string]: EnvironmentConfig } = {
     envName: 'dev',
     apiDescription: 'Development API for Water Sensor Tracker',
     retentionDays: 30,
-    isProd: false
+    isProd: false,
+    stackName: 'WaterSensorTracker-Dev'
   },
   prod: {
     environment: 'prod',
     envName: 'prod',
     apiDescription: 'Production API for Water Sensor Tracker',
     retentionDays: 90,
-    isProd: true
+    isProd: true,
+    stackName: 'WaterSensorTracker-Prod'
   }
 };

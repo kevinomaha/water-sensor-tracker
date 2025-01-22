@@ -3,6 +3,7 @@ import json
 import boto3
 import time
 from datetime import datetime
+from decimal import Decimal
 
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb')
@@ -14,6 +15,13 @@ bucket_name = os.environ['BUCKET_NAME']
 
 # Get DynamoDB table
 table = dynamodb.Table(table_name)
+
+# Custom JSON encoder to handle Decimal
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 def handler(event, context):
     """
@@ -45,7 +53,7 @@ def handler(event, context):
 def process_sensor_data(event):
     """Process and store new sensor reading"""
     
-    body = json.loads(event['body'])
+    body = json.loads(event['body'], parse_float=Decimal)
     
     # Validate required fields
     required_fields = ['sensorId', 'temperature', 'humidity', 'waterLevel']
@@ -75,7 +83,7 @@ def process_sensor_data(event):
     s3.put_object(
         Bucket=bucket_name,
         Key=f"sensors/{body['sensorId']}/{timestamp}.json",
-        Body=json.dumps(item)
+        Body=json.dumps(item, cls=DecimalEncoder)
     )
     
     return {
@@ -89,16 +97,18 @@ def get_sensor_data(event):
     
     sensor_id = event['pathParameters']['sensorId']
     
-    # Query DynamoDB for the last 24 hours of readings
+    # Query DynamoDB
     response = table.query(
         KeyConditionExpression='sensorId = :sid',
-        ExpressionAttributeValues={':sid': sensor_id},
-        ScanIndexForward=False,  # descending order
-        Limit=100  # limit to last 100 readings
+        ExpressionAttributeValues={
+            ':sid': sensor_id
+        },
+        ScanIndexForward=False,  # Sort in descending order (newest first)
+        Limit=10
     )
     
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps(response['Items'])
+        'body': json.dumps({'items': response.get('Items', [])}, cls=DecimalEncoder)
     }

@@ -44,16 +44,59 @@ The Water Sensor Tracker is a cloud-native IoT solution built with:
 ```mermaid
 graph LR
     Sensor[IoT Sensor] --> API[API Gateway]
-    API --> Lambda[Lambda Function]
+    API --> Lambda[Sensor Processor Lambda]
     Lambda --> DynamoDB[DynamoDB Table]
     Lambda --> S3[S3 Bucket]
+
+    Browser[Web Browser] --> API
+    API --> WebLambda[Web Interface Lambda]
+    WebLambda --> DynamoDB
 
     style Sensor fill:#81ecec,stroke:#00cec9
     style API fill:#74b9ff,stroke:#0984e3
     style Lambda fill:#a8e6cf,stroke:#3b7d4f
+    style WebLambda fill:#a8e6cf,stroke:#3b7d4f
     style DynamoDB fill:#ffeaa7,stroke:#fdcb6e
     style S3 fill:#fab1a0,stroke:#e17055
+    style Browser fill:#dfe6e9,stroke:#636e72
+
+    %% Configuration
+    classDef default fill:#fff,stroke:#333,stroke-width:2px;
+    linkStyle default stroke:#333,stroke-width:2px;
 ```
+
+---
+
+# Key Components
+
+## Data Ingestion
+- IoT sensors send data via HTTP POST
+- API Gateway routes requests to Lambda
+- Data stored in DynamoDB with TTL
+- Historical data archived to S3
+
+## Web Interface
+- Modern, responsive web UI
+- Real-time sensor data display
+- Pagination with 20 records per page
+- Multiple sensor selection
+- Built with vanilla JavaScript for lightweight performance
+
+---
+
+# Data Flow
+
+## Ingestion Flow
+1. Sensors send readings via HTTP POST
+2. Sensor Processor Lambda validates and processes data
+3. Current data stored in DynamoDB
+4. Historical data archived to S3
+
+## Web Interface Flow
+1. Users access web UI via browser
+2. Web Interface Lambda serves HTML/JS/CSS
+3. UI makes API calls for paginated data
+4. DynamoDB queries return latest sensor readings
 
 ---
 

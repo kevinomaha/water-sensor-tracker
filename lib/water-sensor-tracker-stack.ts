@@ -55,9 +55,21 @@ export class WaterSensorTrackerStack extends cdk.Stack {
       }
     });
 
+    // Lambda function for web interface
+    const webInterfaceFunction = new lambda.Function(this, 'WebInterface', {
+      runtime: lambda.Runtime.PYTHON_3_9,
+      handler: 'web_interface.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '..', 'lambda')),
+      environment: {
+        TABLE_NAME: sensorTable.tableName,
+        ENVIRONMENT: envName
+      }
+    });
+
     // Grant permissions
     sensorTable.grantReadWriteData(processorFunction);
     archiveBucket.grantReadWrite(processorFunction);
+    sensorTable.grantReadData(webInterfaceFunction);
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'WaterSensorApi', {
@@ -73,11 +85,7 @@ export class WaterSensorTrackerStack extends cdk.Stack {
             loggingLevel: isProd ? apigateway.MethodLoggingLevel.ERROR : apigateway.MethodLoggingLevel.INFO,
           },
         },
-      },
-      defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS
-      },
+      }
     });
 
     // API resources and methods
@@ -89,6 +97,104 @@ export class WaterSensorTrackerStack extends cdk.Stack {
     // GET /sensors/{sensorId}
     const sensor = sensors.addResource('{sensorId}');
     sensor.addMethod('GET', new apigateway.LambdaIntegration(processorFunction));
+
+    // Web Interface endpoints
+    const webInterface = api.root.addResource('web');
+    webInterface.addMethod('GET', new apigateway.LambdaIntegration(webInterfaceFunction, {
+      proxy: true,
+      integrationResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': "'*'",
+          'method.response.header.Access-Control-Allow-Methods': "'GET,OPTIONS'",
+          'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        }
+      }]
+    }), {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+          'method.response.header.Access-Control-Allow-Methods': true,
+          'method.response.header.Access-Control-Allow-Headers': true
+        }
+      }]
+    });
+    
+    const sensorData = sensors.addResource('data');
+    sensorData.addMethod('GET', new apigateway.LambdaIntegration(webInterfaceFunction, {
+      proxy: true,
+      integrationResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': "'*'",
+          'method.response.header.Access-Control-Allow-Methods': "'GET,OPTIONS'",
+          'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        }
+      }]
+    }), {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+          'method.response.header.Access-Control-Allow-Methods': true,
+          'method.response.header.Access-Control-Allow-Headers': true
+        }
+      }]
+    });
+
+    // Add OPTIONS methods manually
+    const webInterfaceOptions = webInterface.addMethod('OPTIONS', new apigateway.MockIntegration({
+      integrationResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': "'*'",
+          'method.response.header.Access-Control-Allow-Methods': "'GET,OPTIONS'",
+          'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          'method.response.header.Access-Control-Max-Age': "'7200'"
+        }
+      }],
+      passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+      requestTemplates: {
+        "application/json": "{\"statusCode\": 200}"
+      }
+    }), {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+          'method.response.header.Access-Control-Allow-Methods': true,
+          'method.response.header.Access-Control-Allow-Headers': true,
+          'method.response.header.Access-Control-Max-Age': true
+        }
+      }]
+    });
+
+    const sensorDataOptions = sensorData.addMethod('OPTIONS', new apigateway.MockIntegration({
+      integrationResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': "'*'",
+          'method.response.header.Access-Control-Allow-Methods': "'GET,OPTIONS'",
+          'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+          'method.response.header.Access-Control-Max-Age': "'7200'"
+        }
+      }],
+      passthroughBehavior: apigateway.PassthroughBehavior.NEVER,
+      requestTemplates: {
+        "application/json": "{\"statusCode\": 200}"
+      }
+    }), {
+      methodResponses: [{
+        statusCode: '200',
+        responseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true,
+          'method.response.header.Access-Control-Allow-Methods': true,
+          'method.response.header.Access-Control-Allow-Headers': true,
+          'method.response.header.Access-Control-Max-Age': true
+        }
+      }]
+    });
 
     // Add stack outputs
     new cdk.CfnOutput(this, 'ApiEndpoint', {

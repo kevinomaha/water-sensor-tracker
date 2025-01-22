@@ -1,0 +1,21 @@
+graph LR
+    Sensor[IoT Sensor] --> API[API Gateway]
+    API --> Lambda[Sensor Processor Lambda]
+    Lambda --> DynamoDB[DynamoDB Table]
+    Lambda --> S3[S3 Bucket]
+
+    Browser[Web Browser] --> API
+    API --> WebLambda[Web Interface Lambda]
+    WebLambda --> DynamoDB
+
+    style Sensor fill:#81ecec,stroke:#00cec9
+    style API fill:#74b9ff,stroke:#0984e3
+    style Lambda fill:#a8e6cf,stroke:#3b7d4f
+    style WebLambda fill:#a8e6cf,stroke:#3b7d4f
+    style DynamoDB fill:#ffeaa7,stroke:#fdcb6e
+    style S3 fill:#fab1a0,stroke:#e17055
+    style Browser fill:#dfe6e9,stroke:#636e72
+
+    %% Configuration
+    classDef default fill:#fff,stroke:#333,stroke-width:2px;
+    linkStyle default stroke:#333,stroke-width:2px;
